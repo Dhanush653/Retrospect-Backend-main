@@ -4,6 +4,7 @@ import com.example.retrospect.createchatroom.dto.RoomDTO;
 import com.example.retrospect.createchatroom.entity.AccessControl;
 import com.example.retrospect.createchatroom.entity.CreateRoomEntity;
 import com.example.retrospect.createchatroom.repository.IRoomRepository;
+import com.example.retrospect.roomToUser.repository.IRoomToUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,9 @@ public class RoomService implements IRoomService{
 
     @Autowired
     private IRoomRepository roomRepository;
+
+    @Autowired
+    private IRoomToUserRepository roomToUserRepository;
 
 
     @Override
@@ -55,8 +59,6 @@ public class RoomService implements IRoomService{
         Optional<CreateRoomEntity> optionalRoomEntity = roomRepository.findById(roomId);
         if (optionalRoomEntity.isPresent()) {
             CreateRoomEntity roomEntity = optionalRoomEntity.get();
-
-
             roomEntity.setRoomName(updatedRoomEntity.getRoomName());
             roomEntity.setRoomDescription(updatedRoomEntity.getRoomDescription());
             roomEntity.setRoom_startdate(updatedRoomEntity.getRoom_startdate());
@@ -95,5 +97,15 @@ public class RoomService implements IRoomService{
         }
     }
 
+    @Transactional
+    @Override
+    public void deleteRoom(long roomId) {
+        Optional<CreateRoomEntity> room = roomRepository.findById(roomId);
+        room.ifPresent(createRoomEntity -> {
+            roomToUserRepository.deleteByRoomId(roomId);
+            roomToUserRepository.deleteAccessControlByRoomId(roomId);
+            roomRepository.delete(createRoomEntity);
 
+        });
+    }
 }

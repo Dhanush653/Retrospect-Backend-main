@@ -14,5 +14,4 @@ public class RoomDTO {
     private String access;
     private Set<String> allowedEmails;
 
-
 }
