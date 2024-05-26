@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RoomAccessRequestDTO {
-    private String email;
+    private String password;
     private long roomId;
 }

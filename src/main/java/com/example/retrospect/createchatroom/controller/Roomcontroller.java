@@ -21,9 +21,6 @@ public class Roomcontroller {
         this.iRoomService = roomService;
     }
 
-    @Autowired
-    IRoomRepository iRoomRepository;
-
     @GetMapping("/rooms")
     List<CreateRoomEntity> getAllRooms(){
         return iRoomService.getAllRooms();
@@ -36,19 +33,24 @@ public class Roomcontroller {
         return iRoomService.createRoom(roomDTO);
     }
 
+    @PostMapping("/access")
+    public String checkAccess(@RequestBody RoomAccessRequestDTO accessRequest) {
+        return iRoomService.checkAccess(accessRequest);
+    }
+
     @PutMapping("/updateRoom/{roomId}")
     public CreateRoomEntity updateRoom(@PathVariable long roomId, @RequestBody CreateRoomEntity updatedRoomEntity){
         return iRoomService.updateRoom(roomId, updatedRoomEntity);
     }
 
-    @PostMapping("/rooms/check-access")
-    public String checkRoomAccess(@RequestBody RoomAccessRequestDTO requestDTO) {
-        if (iRoomService.checkRoomAccess(requestDTO.getEmail(), requestDTO.getRoomId())) {
-            return "access approved";
-        } else {
-            return "access denied";
-        }
-    }
+//    @PostMapping("/rooms/check-access")
+//    public String checkRoomAccess(@RequestBody RoomAccessRequestDTO requestDTO) {
+//        if (iRoomService.checkRoomAccess(requestDTO.getEmail(), requestDTO.getRoomId())) {
+//            return "access approved";
+//        } else {
+//            return "access denied";
+//        }
+//    }
 
     @PutMapping("/getRoomById/{roomId}")
     public CreateRoomEntity getRoomById(@PathVariable long roomId){

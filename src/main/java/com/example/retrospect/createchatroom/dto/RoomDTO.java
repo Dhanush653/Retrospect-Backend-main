@@ -12,6 +12,6 @@ public class RoomDTO {
     private String roomStatus = "active";
     private String roomCreatedBy;
     private String access;
-    private Set<String> allowedEmails;
+    private String password;
 
 }

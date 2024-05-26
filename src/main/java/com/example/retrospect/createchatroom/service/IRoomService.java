@@ -1,5 +1,6 @@
 package com.example.retrospect.createchatroom.service;
 
+import com.example.retrospect.createchatroom.dto.RoomAccessRequestDTO;
 import com.example.retrospect.createchatroom.entity.CreateRoomEntity;
 
 import java.util.List;
@@ -15,11 +16,13 @@ public interface IRoomService {
 
     CreateRoomEntity createRoom(RoomDTO roomDTO);
 
+    String checkAccess(RoomAccessRequestDTO accessRequest);
+
     CreateRoomEntity updateRoom(long  roomId, CreateRoomEntity updatedRoomEntity);
 
     CreateRoomEntity convertDtoToEntity(RoomDTO roomDTO);
 
-    boolean checkRoomAccess(String email, long roomId);
+//    boolean checkRoomAccess(String email, long roomId);
 
     CreateRoomEntity getRoomById(long  roomId);
 

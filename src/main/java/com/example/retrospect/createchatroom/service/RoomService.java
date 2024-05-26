@@ -1,8 +1,9 @@
 package com.example.retrospect.createchatroom.service;
 
+import com.example.retrospect.createchatroom.dto.RoomAccessRequestDTO;
 import com.example.retrospect.createchatroom.dto.RoomDTO;
-import com.example.retrospect.createchatroom.entity.AccessControl;
 import com.example.retrospect.createchatroom.entity.CreateRoomEntity;
+import com.example.retrospect.createchatroom.entity.CredentialsEntity;
 import com.example.retrospect.createchatroom.repository.IRoomRepository;
 import com.example.retrospect.roomToUser.repository.IRoomToUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 
@@ -36,19 +35,14 @@ public class RoomService implements IRoomService{
     @Transactional
     public CreateRoomEntity createRoom(RoomDTO roomDTO) {
         CreateRoomEntity createRoomEntity = convertDtoToEntity(roomDTO);
-        // Set roomCreatedBy
-        createRoomEntity.setRoomCreatedBy(roomDTO.getRoomCreatedBy()); // assuming roomCreatedBy field exists in RoomDTO
-        if ("restricted".equals(roomDTO.getAccess()) && roomDTO.getAllowedEmails() != null) {
-            Set<AccessControl> accessControls = roomDTO.getAllowedEmails().stream()
-                    .map(email -> {
-                        AccessControl ac = new AccessControl();
-                        ac.setEmail(email);
-                        ac.setRoom(createRoomEntity);
-                        return ac;
-                    })
-                    .collect(Collectors.toSet());
-            createRoomEntity.setAllowedEmails(accessControls);
+        createRoomEntity.setRoomCreatedBy(roomDTO.getRoomCreatedBy());
+
+        if ("restricted".equals(roomDTO.getAccess())) {
+            CredentialsEntity credentials = new CredentialsEntity();
+            credentials.setPassword(roomDTO.getPassword());
+            createRoomEntity.setCredentials(credentials);
         }
+
         return roomRepository.save(createRoomEntity);
     }
 
@@ -70,23 +64,41 @@ public class RoomService implements IRoomService{
             throw new NoSuchElementException("Room with id " + roomId + " not found");
         }
     }
+    @Override
+    public String checkAccess(RoomAccessRequestDTO accessRequest) {
+        CreateRoomEntity room = roomRepository.findById(accessRequest.getRoomId()).orElse(null);
+        if (room != null && room.getCredentials() != null) {
+            CredentialsEntity credentials = room.getCredentials();
+            if (credentials.getPassword().equals(accessRequest.getPassword())) {
+                return "Access approved";
+            }
+        }
+        return "Access denied";
+    }
 
+//    @Override
+//    public CreateRoomEntity convertDtoToEntity(RoomDTO roomDTO) {
+//        CreateRoomEntity entity = new CreateRoomEntity();
+//        entity.setRoomName(roomDTO.getRoomName());
+//        entity.setRoomDescription(roomDTO.getRoomDescription());
+//        entity.setRoomStatus(roomDTO.getRoomStatus());
+//
+//        entity.setAccess(roomDTO.getAccess());
+//        return entity;
+//    }
     @Override
     public CreateRoomEntity convertDtoToEntity(RoomDTO roomDTO) {
-        CreateRoomEntity entity = new CreateRoomEntity();
-        entity.setRoomName(roomDTO.getRoomName());
-        entity.setRoomDescription(roomDTO.getRoomDescription());
-        entity.setRoomStatus(roomDTO.getRoomStatus());
-
-        entity.setAccess(roomDTO.getAccess());
-        return entity;
+        CreateRoomEntity roomEntity = new CreateRoomEntity();
+        roomEntity.setRoomName(roomDTO.getRoomName());
+        roomEntity.setRoomDescription(roomDTO.getRoomDescription());
+        roomEntity.setAccess(roomDTO.getAccess());
+        return roomEntity;
     }
-
-    @Override
-    public boolean checkRoomAccess(String email, long roomId) {
-        CreateRoomEntity room = roomRepository.findById(roomId).orElse(null);
-        return room != null && room.getAllowedEmails().stream().anyMatch(e -> e.getEmail().equals(email));
-    }
+//    @Override
+//    public boolean checkRoomAccess(String email, long roomId) {
+//        CreateRoomEntity room = roomRepository.findById(roomId).orElse(null);
+//        return room != null && room.getAllowedEmails().stream().anyMatch(e -> e.getEmail().equals(email));
+//    }
     @Override
     public CreateRoomEntity getRoomById(long roomId) {
         Optional<CreateRoomEntity> optionalRoomEntity = roomRepository.findById(roomId);
