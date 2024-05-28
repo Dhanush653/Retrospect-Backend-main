@@ -1,14 +1,12 @@
 package com.example.retrospect.websockets.config;
 
-
 import com.corundumstudio.socketio.SocketIOServer;
-
+import com.corundumstudio.socketio.Configuration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration
+@org.springframework.context.annotation.Configuration
 @EnableAutoConfiguration
 public class SocketIOConfig {
 
@@ -18,13 +16,22 @@ public class SocketIOConfig {
     @Value("${socket-server.port}")
     private Integer port;
 
-
     @Bean
     public SocketIOServer socketIOServer() {
-        com.corundumstudio.socketio.Configuration config = new com.corundumstudio.socketio.Configuration();
+        Configuration config = new Configuration();
         config.setHostname(host);
         config.setPort(port);
+
+        config.setPingInterval(30000);
+        config.setPingTimeout(60000);
+        config.setMaxFramePayloadLength(1024 * 1024);
+        config.setBossThreads(4);
+        config.setWorkerThreads(8);
+
+        config.setAuthorizationListener(data -> {
+            return true;
+        });
+
         return new SocketIOServer(config);
     }
-
 }

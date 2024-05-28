@@ -15,11 +15,8 @@ public class SocketService {
 
     private final MessageService messageService;
 
-    public void sendSocketMessage
-
-            (SocketIOClient senderClient, Message message, String room) {
-        for (
-                SocketIOClient client : senderClient.getNamespace().getRoomOperations(room).getClients()) {
+    public void sendSocketMessage(SocketIOClient senderClient, Message message, String room) {
+        for (SocketIOClient client : senderClient.getNamespace().getRoomOperations(room).getClients()) {
             if (!client.getSessionId().equals(senderClient.getSessionId())) {
                 client.sendEvent("read_message", message);
             }
@@ -29,7 +26,7 @@ public class SocketService {
     public void saveMessage(SocketIOClient senderClient, Message message) {
         Message storedMessage = messageService.saveMessage(Message.builder()
                 .messageType(message.getMessageType())
-                        .contentType(message.getContentType())
+                .contentType(message.getContentType())
                 .content(message.getContent())
                 .room(message.getRoom())
                 .username(message.getUsername())
@@ -37,7 +34,7 @@ public class SocketService {
         sendSocketMessage(senderClient, storedMessage, message.getRoom());
     }
 
-    public void saveInfoMessage(SocketIOClient senderClient, String message, String room ,String username ) {
+    public void saveInfoMessage(SocketIOClient senderClient, String message, String room, String username) {
         Message storedMessage = messageService.saveMessage(Message.builder()
                 .content(message)
                 .room(room)
@@ -45,6 +42,5 @@ public class SocketService {
                 .build());
         sendSocketMessage(senderClient, storedMessage, room);
     }
-
-
 }
+

@@ -1,7 +1,7 @@
 package com.example.retrospect.topic.controller;
 
 
-import com.example.retrospect.topic.dto.TopicDTO;
+import  com.example.retrospect.topic.dto.TopicDTO;
 import com.example.retrospect.topic.entity.TopicEntity;
 import com.example.retrospect.topic.service.TopicService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public class TopicController {
     public List<TopicEntity> getAllTopic() {
         return topicService.getAllTopics();
     }
-
+ 
     @PostMapping("/addTopic")
     public ResponseEntity<?> addTopic(@RequestBody TopicDTO topicDto) {
         try {

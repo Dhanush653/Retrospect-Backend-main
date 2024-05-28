@@ -21,6 +21,6 @@ public interface IRoomToUserRepository extends JpaRepository<RoomToUserEntity, R
 
     @Modifying
     @Transactional
-    @Query("DELETE FROM AccessControl ac WHERE ac.room.id = :roomId")
+    @Query("DELETE FROM CredentialsEntity ac WHERE ac.room.id = :roomId")
     void deleteAccessControlByRoomId(Long roomId);
 }
