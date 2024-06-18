@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @Slf4j
@@ -38,28 +40,74 @@ public class SocketModule {
         };
     }
 
+//    private ConnectListener onConnected() {
+//        return (client) -> {
+//            var params = client.getHandshakeData().getUrlParams();
+//            String room = String.join("", params.getOrDefault("room", List.of("default")));
+//            String username = String.join("", params.getOrDefault("username", List.of("Anonymous")));
+//            client.joinRoom(room);
+//            log.info("Client [{}] joined room [{}] with username [{}]", client.getSessionId(), room, username);
+//
+//            // Log all clients in the room
+//            var clients = server.getRoomOperations(room).getClients();
+//            log.info("Room [{}] has [{}] clients", room, clients.size());
+//
+//            // Log handshake data
+//            var handshakeData = client.getHandshakeData();
+//            log.info("Handshake data: {}", handshakeData);
+//
+//            // Log if any session attributes are set
+//            log.info("Session ID [{}] - User [{}]", client.getSessionId(), client.getSessionId().toString());
+//
+//            socketService.saveInfoMessage(client, String.format(Constants.WELCOME_MESSAGE, username), room, username);
+//        };
+//    }
+//
+//    private DisconnectListener onDisconnected() {
+//        return client -> {
+//            var params = client.getHandshakeData().getUrlParams();
+//            String room = String.join("", params.getOrDefault("room", List.of("default")));
+//            String username = String.join("", params.getOrDefault("username", List.of("Anonymous")));
+//
+//            // Log disconnection reason if available
+//            log.info("Client [{}] disconnected from room [{}] with username [{}]", client.getSessionId(), room, username);
+//
+//            socketService.saveInfoMessage(client, String.format(Constants.EXIST_MESSAGE, username), room, username);
+//            client.leaveRoom(room); // Ensure client leaves the room
+//
+//            // Log remaining clients in the room
+//            var clients = server.getRoomOperations(room).getClients();
+//            log.info("Room [{}] has [{}] clients remaining", room, clients.size());
+//        };
+//    }
+private ConcurrentHashMap<UUID, Long> clientLastConnectionTime = new ConcurrentHashMap<>();
+
     private ConnectListener onConnected() {
-        return (client) -> {
+        return client -> {
+            UUID clientId = client.getSessionId();
+            long now = System.currentTimeMillis();
+            Long lastConnectionTime = clientLastConnectionTime.get(clientId);
+
+            if (lastConnectionTime != null && (now - lastConnectionTime < 5000)) {
+                // Ignore this connection if it happened too soon after the last one
+                log.warn("Ignoring rapid reconnect for client [{}]", clientId);
+                return;
+            }
+
+            clientLastConnectionTime.put(clientId, now);
+
             var params = client.getHandshakeData().getUrlParams();
             String room = String.join("", params.getOrDefault("room", List.of("default")));
             String username = String.join("", params.getOrDefault("username", List.of("Anonymous")));
             client.joinRoom(room);
-            log.info("Client [{}] joined room [{}] with username [{}]", client.getSessionId(), room, username);
 
-            // Log all clients in the room
+            log.info("Client [{}] joined room [{}] with username [{}] at [{}]", clientId, room, username, now);
+
             var clients = server.getRoomOperations(room).getClients();
-            log.info("Room [{}] has [{}] clients", room, clients.size());
-
-            // Log handshake data
-            var handshakeData = client.getHandshakeData();
-            log.info("Handshake data: {}", handshakeData);
-
-            // Log if any session attributes are set
-            log.info("Session ID [{}] - User [{}]", client.getSessionId(), client.getSessionId().toString());
-
-            socketService.saveInfoMessage(client, String.format(Constants.WELCOME_MESSAGE, username), room, username);
+            log.info("Room [{}] has [{}] clients after join event", room, clients.size());
         };
     }
+
 
     private DisconnectListener onDisconnected() {
         return client -> {
@@ -67,17 +115,19 @@ public class SocketModule {
             String room = String.join("", params.getOrDefault("room", List.of("default")));
             String username = String.join("", params.getOrDefault("username", List.of("Anonymous")));
 
-            // Log disconnection reason if available
-            log.info("Client [{}] disconnected from room [{}] with username [{}]", client.getSessionId(), room, username);
+            log.info("Client [{}] disconnected from room [{}] with username [{}] at [{}]",
+                    client.getSessionId(), room, username, System.currentTimeMillis());
 
-            socketService.saveInfoMessage(client, String.format(Constants.EXIST_MESSAGE, username), room, username);
-            client.leaveRoom(room); // Ensure client leaves the room
-
-            // Log remaining clients in the room
+            client.leaveRoom(room);
             var clients = server.getRoomOperations(room).getClients();
-            log.info("Room [{}] has [{}] clients remaining", room, clients.size());
+            log.info("Room [{}] has [{}] clients remaining after disconnect event", room, clients.size());
+
+            // Check if the client had any specific disconnect reason
+            String disconnectReason = client.getTransport().name(); // or any other reason you can derive
+            log.info("Client [{}] disconnected due to [{}]", client.getSessionId(), disconnectReason);
         };
     }
+
 
 
 }

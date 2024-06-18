@@ -22,8 +22,8 @@ public class SocketIOConfig {
         config.setHostname(host);
         config.setPort(port);
 
-        config.setPingInterval(30000);
-        config.setPingTimeout(60000);
+        config.setPingInterval(60000); // Increase to 60 seconds
+        config.setPingTimeout(120000); // Increase to 120 seconds
         config.setMaxFramePayloadLength(1024 * 1024);
         config.setBossThreads(4);
         config.setWorkerThreads(8);
